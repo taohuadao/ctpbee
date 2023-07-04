@@ -1,14 +1,15 @@
 {
-  "CONNECT_INFO": {
-    "userid": "089131",
-    "password": "350888",
+ "CONNECT_INFO": {
+    "userid": "6327",
+    "password": "123456",
     "brokerid": "9999",
-    "md_address": "tcp://180.168.146.187:10211",
-    "td_address": "tcp://180.168.146.187:10201",
+    "md_address": "tcp://121.37.80.177:20004",
+    "td_address": "tcp://121.37.80.177:20002",
     "appid": "simnow_client_test",
     "auth_code": "0000000000000000"
   },
   "INTERFACE": "ctp",
   "MD_FUNC": true,
-  "TD_FUNC": true
+  "TD_FUNC": true,
+    "WAIT_INIT": 1
 }
