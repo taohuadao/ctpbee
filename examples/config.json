@@ -1,6 +1,6 @@
 {
- "CONNECT_INFO": {
-    "userid": "6327",
+  "CONNECT_INFO": {
+    "userid": "6437",
     "password": "123456",
     "brokerid": "9999",
     "md_address": "tcp://121.37.80.177:20004",
@@ -11,5 +11,9 @@
   "INTERFACE": "ctp",
   "MD_FUNC": true,
   "TD_FUNC": true,
-    "WAIT_INIT": 1
+  "WAIT_INIT": 1,
+  "SLIPPAGE_COVER": 1,
+  "SLIPPAGE_SEL": 1,
+  "SLIPPAGE_SHORT": 1,
+  "SLIPPAGE_BUY": 1
 }
