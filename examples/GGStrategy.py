@@ -1,9 +1,21 @@
+import io
 import math
 from datetime import datetime
 
 from ctpbee import CtpbeeApi, CtpBee
 from ctpbee.constant import ContractData, LogData, TickData, BarData, OrderData, TradeData, PositionData, AccountData, \
     Direction, OrderType
+
+class CallPut:
+    def __init__(self):
+        self.price = 0
+        self.put = None
+        self.call = None
+class ContractGroup:
+    def __init__(self):
+        self.contract = None
+        self.callput = {}
+
 
 
 class Demo(CtpbeeApi):
@@ -23,9 +35,22 @@ class Demo(CtpbeeApi):
         self.hold1 = False;
         self.hold2 = False;
 
+        self.contract_groups = {}
+
     def on_contract(self, contract: ContractData):
         """ 处理推送的合约信息 """
-        # print(contract, "\n")
+        print(contract, "\n")
+        with io.open('file.txt', 'a', encoding='utf-8') as f:
+            f.write(str(contract)+ "\n")
+
+        if contract.option_underlying == "":
+            self.contract_groups[contract.symbol] = ContractGroup()
+            self.contract_groups[contract.symbol].contract = contract
+        else:
+
+            pass
+
+
 
     def on_tick(self, tick: TickData) -> None:
         """ 处理推送的tick """
