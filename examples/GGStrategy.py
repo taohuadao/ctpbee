@@ -1,60 +1,90 @@
 import io
 import math
+import re
+import os
+
 from datetime import datetime
 
 from ctpbee import CtpbeeApi, CtpBee
 from ctpbee.constant import ContractData, LogData, TickData, BarData, OrderData, TradeData, PositionData, AccountData, \
     Direction, OrderType
 
+
 class CallPut:
     def __init__(self):
         self.price = 0
         self.put = None
         self.call = None
+        self.pdata = None
+        self.cdata = None
+
+
 class ContractGroup:
     def __init__(self):
         self.contract = None
         self.callput = {}
 
 
-
 class Demo(CtpbeeApi):
-    def __init__(self, name, code, pcode, ccode, price, expireday):
+    def __init__(self, name):
         super().__init__(name)
         self.instrument_set = ["rb2310.SHFE"]
         self.isok = False
-        self.code = code
-        self.pcode = pcode
-        self.ccode = ccode
-        self.price = price
-        self.expireday = expireday
-        self.tickdata = None
-        self.ptickdata = None
-        self.ctickdata = None
-
-        self.hold1 = False;
-        self.hold2 = False;
 
         self.contract_groups = {}
+        self.valid_contract = ["rb", "RB"]
+
+        contract_list_file = 'file.txt'
+        if os.path.isfile(contract_list_file):
+            os.remove(contract_list_file)
 
     def on_contract(self, contract: ContractData):
         """ 处理推送的合约信息 """
         print(contract, "\n")
         with io.open('file.txt', 'a', encoding='utf-8') as f:
-            f.write(str(contract)+ "\n")
+            f.write(str(contract.symbol) + "\n")
 
         if contract.option_underlying == "":
-            self.contract_groups[contract.symbol] = ContractGroup()
-            self.contract_groups[contract.symbol].contract = contract
+
+            symbols = re.split(r"([A-Za-z]+)([0-9]+)", contract.symbol)
+            # print(symbols)
+            if len(symbols) < 2:
+                return None
+            symbol = symbols[1]
+
+            if symbol in self.valid_contract:
+                print("create ", contract.symbol)
+                self.contract_groups[contract.symbol] = ContractGroup()
+                self.contract_groups[contract.symbol].contract = contract
+                self.app.subscribe(contract.symbol)
+
         else:
+            symbol = contract.symbol
+            symbol = symbol.replace("-", "")
+            parts = re.split(r"([A-Za-z]+)([0-9]+)([A-Za-z]+)([0-9]+)", symbol)
+            # print(parts)
 
-            pass
+            symbol = parts[1] + parts[2]
+            direction = parts[3]
+            strike_price = parts[4]
 
+            if symbol in self.contract_groups:
+                if strike_price not in self.contract_groups[symbol].callput:
+                    self.contract_groups[symbol].callput[strike_price] = CallPut()
+                if direction == "C":
+                    self.contract_groups[symbol].callput[strike_price].call = contract
+                    print("create ", symbol)
+                    self.app.subscribe(contract.symbol)
+                elif direction == "P":
+                    self.contract_groups[symbol].callput[strike_price].put = contract
+                    print("create ", symbol)
+                    self.app.subscribe(contract.symbol)
 
+            # pass
 
     def on_tick(self, tick: TickData) -> None:
         """ 处理推送的tick """
-        # print(tick)
+        print(tick)
         if not self.isok:
             return None
         flag = False
@@ -113,9 +143,9 @@ class Demo(CtpbeeApi):
         if init:
             print("init success")
             self.isok = True
-            self.app.subscribe(self.code)
-            self.app.subscribe(self.pcode)
-            self.app.subscribe(self.ccode)
+            # self.app.subscribe(self.code)
+            # self.app.subscribe(self.pcode)
+            # self.app.subscribe(self.ccode)
 
             self.app.trader.query_position()
 
@@ -128,6 +158,7 @@ class Demo(CtpbeeApi):
         """ 成交回报 """
         # print(trade, "\n")
 
+
     def on_position(self, position: PositionData) -> None:
         """ 处理持仓回报 """
         print(position, "\n")
@@ -139,17 +170,18 @@ class Demo(CtpbeeApi):
             self.action.buy_close(math.floor(position.price), position.volume, position, OrderType.LIMIT)
 
         if position.direction == Direction.SHORT:
-            self.action.sell_close(math.ceil(position.price) , position.volume, position, OrderType.LIMIT)
+            self.action.sell_close(math.ceil(position.price), position.volume, position, OrderType.LIMIT)
 
     def on_account(self, account: AccountData) -> None:
         """ 处理账户信息 """
         print(account, "\n")
+        print()
 
 
 def letsgo():
     app = CtpBee(name="demo", import_name=__name__, refresh=True)
     # 创建对象
-    demo = Demo("test", "rb2310.SHFE", "rb2310P4000.SHFE", "rb2310C4000.SHFE", 4000, datetime(2023, 9, 22))
+    demo = Demo("test")
     # 添加对象, 你可以继承多个类 然后实例化不同的插件 再载入它, 这些都是极其自由化的操作
     app.add_extension(demo)
 
